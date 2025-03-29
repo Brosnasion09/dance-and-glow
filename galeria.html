@@ -1,0 +1,668 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Conoce más sobre mí - Carrusel de Imágenes</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: linear-gradient(145deg, #e8d8c3 0%, #c9b7a2 100%);
+            font-family: 'Georgia', serif;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+
+        .magazine-title {
+            font-size: 2.5em;
+            color: #2a2a2a;
+            text-transform: uppercase;
+            letter-spacing: 4px;
+            text-shadow: 1px 1px 3px rgba(0,0,0,0.2);
+            padding: 20px 0;
+            text-align: center;
+            z-index: 10;
+        }
+
+        .magazine-container {
+            position: relative;
+            width: 100%;
+            max-width: 900px; /* Ancho máximo del carrusel */
+            height: 500px; /* Altura fija para el carrusel */
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+        }
+
+        .carousel-track {
+            display: flex;
+            transition: transform 0.5s ease;
+            height: 100%;
+        }
+
+        .photo-container {
+            flex: 0 0 300px; /* Ancho fijo para cada contenedor */
+            height: 450px;
+            transform-style: preserve-3d;
+            cursor: pointer;
+            transition: transform 0.5s ease;
+            margin: 0 10px; /* Espacio horizontal entre contenedores */
+            overflow: hidden;
+        }
+
+        .photo-inner {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.3);
+            background: white;
+            transition: transform 0.6s ease;
+        }
+
+        .photo-inner::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 50%;
+            background: linear-gradient(to top, rgba(232, 216, 195, 1), transparent);
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        .photo-inner img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            position: relative;
+            z-index: 0;
+        }
+
+        /* Animación al hacer hover */
+        .photo-container:hover {
+            transform: translateZ(30px) rotateY(5deg); /* Elevación y rotación suave */
+        }
+
+        .photo-container:hover .photo-inner {
+            box-shadow: 0 15px 30px rgba(0,0,0,0.5);
+        }
+
+        .photo-overlay {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            padding: 20px;
+            background: linear-gradient(to top, rgba(0,0,0,0.8), transparent);
+            color: white;
+            transform: translateY(100%);
+            transition: all 0.5s ease;
+            z-index: 2;
+        }
+
+        .photo-container:hover .photo-overlay {
+            transform: translateY(0);
+        }
+
+        .photo-title {
+            font-size: 1.2em;
+            margin-bottom: 5px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        .photo-desc {
+            font-size: 0.9em;
+            opacity: 0.9;
+        }
+
+        .carousel-btn {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            background: rgba(0, 0, 0, 0.5);
+            color: white;
+            border: none;
+            padding: 10px;
+            font-size: 2em;
+            cursor: pointer;
+            z-index: 10;
+            transition: background 0.3s ease;
+        }
+
+        .carousel-btn:hover {
+            background: rgba(0, 0, 0, 0.8);
+        }
+
+        .carousel-btn.prev {
+            left: 10px;
+        }
+
+        .carousel-btn.next {
+            right: 10px;
+        }
+
+        .expanded-view {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.95);
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.4s ease;
+        }
+
+        .expanded-view.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .expanded-image {
+            max-width: 80%;
+            max-height: 80%;
+            transform: perspective(1000px) rotateY(-360deg) scale(0.2);
+            opacity: 0;
+            border: 12px solid white;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+            transition: all 0.9s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .expanded-view.active .expanded-image {
+            transform: perspective(1000px) rotateY(0deg) scale(1);
+            opacity: 1;
+        }
+
+        .close-btn {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            color: white;
+            font-size: 2.2em;
+            cursor: pointer;
+            transition: all 0.4s ease;
+        }
+
+        .close-btn:hover {
+            transform: rotate(360deg);
+            color: #ff4d4d;
+        }
+
+        .nav-arrow {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            color: white;
+            font-size: 3em;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            opacity: 0.7;
+        }
+
+        .nav-arrow:hover {
+            opacity: 1;
+            transform: translateY(-50%) scale(1.2);
+        }
+
+        .nav-arrow.left {
+            left: 20px;
+        }
+
+        .nav-arrow.right {
+            right: 20px;
+        }
+
+        @media (max-width: 600px) {
+            .magazine-title {
+                font-size: 1.5em;
+                padding: 10px 0;
+            }
+
+            .magazine-container {
+                max-width: 100%;
+                height: 350px;
+            }
+
+            .photo-container {
+                flex: 0 0 200px;
+                height: 300px;
+                margin: 0 5px;
+            }
+
+            .photo-container:hover {
+                transform: translateZ(20px) rotateY(3deg);
+            }
+
+            .photo-title {
+                font-size: 0.9em;
+            }
+
+            .photo-desc {
+                font-size: 0.7em;
+            }
+
+            .photo-inner::after {
+                height: 40%;
+            }
+
+            .carousel-btn {
+                font-size: 1.5em;
+                padding: 5px;
+            }
+
+            .nav-arrow {
+                font-size: 2em;
+            }
+
+            .expanded-image {
+                max-width: 90%;
+                max-height: 70%;
+            }
+
+            .close-btn {
+                font-size: 1.8em;
+                top: 10px;
+                right: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <h1 class="magazine-title">Conoce más sobre mí</h1>
+    <div class="magazine-container">
+        <button class="carousel-btn prev">◄</button>
+        <div class="carousel-track">
+            <div class="photo-container">
+                <div class="photo-inner">
+                    <img src="album/1.jpg" alt="Foto 1">
+                    <div class="photo-overlay">
+                        <div class="photo-title">Foto 1</div>
+                        <div class="photo-desc">Descripción 1</div>
+                    </div>
+                </div>
+            </div>
+            <div class="photo-container">
+                <div class="photo-inner">
+                    <img src="album/2.jpg" alt="Foto 2">
+                    <div class="photo-overlay">
+                        <div class="photo-title">Foto 2</div>
+                        <div class="photo-desc">Descripción 2</div>
+                    </div>
+                </div>
+            </div>
+            <div class="photo-container">
+                <div class="photo-inner">
+                    <img src="album/3.jpg" alt="Foto 3">
+                    <div class="photo-overlay">
+                        <div class="photo-title">Foto 3</div>
+                        <div class="photo-desc">Descripción 3</div>
+                    </div>
+                </div>
+            </div>
+            <div class="photo-container">
+                <div class="photo-inner">
+                    <img src="album/4.jpg" alt="Foto 4">
+                    <div class="photo-overlay">
+                        <div class="photo-title">Foto 4</div>
+                        <div class="photo-desc">Descripción 4</div>
+                    </div>
+                </div>
+            </div>
+            <div class="photo-container">
+                <div class="photo-inner">
+                    <img src="album/5.jpg" alt="Foto 5">
+                    <div class="photo-overlay">
+                        <div class="photo-title">Foto 5</div>
+                        <div class="photo-desc">Descripción 5</div>
+                    </div>
+                </div>
+            </div>
+            <div class="photo-container">
+                <div class="photo-inner">
+                    <img src="album/6.jpg" alt="Foto 6">
+                    <div class="photo-overlay">
+                        <div class="photo-title">Foto 6</div>
+                        <div class="photo-desc">Descripción 6</div>
+                    </div>
+                </div>
+            </div>
+            <div class="photo-container">
+                <div class="photo-inner">
+                    <img src="album/7.jpg" alt="Foto 7">
+                    <div class="photo-overlay">
+                        <div class="photo-title">Foto 7</div>
+                        <div class="photo-desc">Descripción 7</div>
+                    </div>
+                </div>
+            </div>
+            <div class="photo-container">
+                <div class="photo-inner">
+                    <img src="album/8.jpg" alt="Foto 8">
+                    <div class="photo-overlay">
+                        <div class="photo-title">Foto 8</div>
+                        <div class="photo-desc">Descripción 8</div>
+                    </div>
+                </div>
+            </div>
+            <div class="photo-container">
+                <div class="photo-inner">
+                    <img src="album/9.jpg" alt="Foto 9">
+                    <div class="photo-overlay">
+                        <div class="photo-title">Foto 9</div>
+                        <div class="photo-desc">Descripción 9</div>
+                    </div>
+                </div>
+            </div>
+            <div class="photo-container">
+                <div class="photo-inner">
+                    <img src="album/10.jpg" alt="Foto 10">
+                    <div class="photo-overlay">
+                        <div class="photo-title">Foto 10</div>
+                        <div class="photo-desc">Descripción 10</div>
+                    </div>
+                </div>
+            </div>
+            <div class="photo-container">
+                <div class="photo-inner">
+                    <img src="album/11.jpg" alt="Foto 11">
+                    <div class="photo-overlay">
+                        <div class="photo-title">Foto 11</div>
+                        <div class="photo-desc">Descripción 11</div>
+                    </div>
+                </div>
+            </div>
+            <div class="photo-container">
+                <div class="photo-inner">
+                    <img src="album/12.jpg" alt="Foto 12">
+                    <div class="photo-overlay">
+                        <div class="photo-title">Foto 12</div>
+                        <div class="photo-desc">Descripción 12</div>
+                    </div>
+                </div>
+            </div>
+            <div class="photo-container">
+                <div class="photo-inner">
+                    <img src="album/13.jpg" alt="Foto 13">
+                    <div class="photo-overlay">
+                        <div class="photo-title">Foto 13</div>
+                        <div class="photo-desc">Descripción 13</div>
+                    </div>
+                </div>
+            </div>
+            <div class="photo-container">
+                <div class="photo-inner">
+                    <img src="album/14.jpg" alt="Foto 14">
+                    <div class="photo-overlay">
+                        <div class="photo-title">Foto 14</div>
+                        <div class="photo-desc">Descripción 14</div>
+                    </div>
+                </div>
+            </div>
+            <div class="photo-container">
+                <div class="photo-inner">
+                    <img src="album/15.jpg" alt="Foto 15">
+                    <div class="photo-overlay">
+                        <div class="photo-title">Foto 15</div>
+                        <div class="photo-desc">Descripción 15</div>
+                    </div>
+                </div>
+            </div>
+            <div class="photo-container">
+                <div class="photo-inner">
+                    <img src="album/16.jpg" alt="Foto 16">
+                    <div class="photo-overlay">
+                        <div class="photo-title">Foto 16</div>
+                        <div class="photo-desc">Descripción 16</div>
+                    </div>
+                </div>
+            </div>
+            <div class="photo-container">
+                <div class="photo-inner">
+                    <img src="album/17.jpg" alt="Foto 17">
+                    <div class="photo-overlay">
+                        <div class="photo-title">Foto 17</div>
+                        <div class="photo-desc">Descripción 17</div>
+                    </div>
+                </div>
+            </div>
+            <div class="photo-container">
+                <div class="photo-inner">
+                    <img src="album/18.jpg" alt="Foto 18">
+                    <div class="photo-overlay">
+                        <div class="photo-title">Foto 18</div>
+                        <div class="photo-desc">Descripción 18</div>
+                    </div>
+                </div>
+            </div>
+            <div class="photo-container">
+                <div class="photo-inner">
+                    <img src="album/19.jpg" alt="Foto 19">
+                    <div class="photo-overlay">
+                        <div class="photo-title">Foto 19</div>
+                        <div class="photo-desc">Descripción 19</div>
+                    </div>
+                </div>
+            </div>
+            <div class="photo-container">
+                <div class="photo-inner">
+                    <img src="album/20.jpg" alt="Foto 20">
+                    <div class="photo-overlay">
+                        <div class="photo-title">Foto 20</div>
+                        <div class="photo-desc">Descripción 20</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <button class="carousel-btn next">►</button>
+    </div>
+
+    <div class="expanded-view">
+        <span class="close-btn">×</span>
+        <span class="nav-arrow left">◄</span>
+        <img class="expanded-image" src="" alt="Expanded">
+        <span class="nav-arrow right">►</span>
+    </div>
+
+    <script>
+        const container = document.querySelector('.magazine-container');
+        const track = document.querySelector('.carousel-track');
+        const photos = document.querySelectorAll('.photo-container');
+        const prevBtn = document.querySelector('.carousel-btn.prev');
+        const nextBtn = document.querySelector('.carousel-btn.next');
+        const expandedView = document.querySelector('.expanded-view');
+        const expandedImage = document.querySelector('.expanded-image');
+        const closeBtn = document.querySelector('.close-btn');
+        const leftArrow = document.querySelector('.nav-arrow.left');
+        const rightArrow = document.querySelector('.nav-arrow.right');
+
+        const totalPhotos = photos.length;
+        const photoWidth = photos[0].offsetWidth + 20; // Ancho de la foto + margen
+        let currentIndex = 0;
+        let autoSlideInterval;
+        let inactivityTimeout;
+
+        // Configurar eventos para cada foto
+        photos.forEach((photo, index) => {
+            const img = photo.querySelector('img');
+            img.onerror = () => console.error(`No se pudo cargar la imagen: ${img.src}`);
+            img.onload = () => console.log(`Imagen cargada correctamente: ${img.src}`);
+
+            photo.addEventListener('click', function() {
+                currentIndex = index;
+                expandedImage.src = img.src;
+                expandedView.classList.add('active');
+                createPageTurnEffect(photo);
+                startAutoSlide();
+            });
+        });
+
+        // Función para mover el carrusel
+        function updateCarousel() {
+            const offset = -currentIndex * photoWidth;
+            track.style.transform = `translateX(${offset}px)`;
+        }
+
+        // Botón anterior
+        prevBtn.addEventListener('click', () => {
+            currentIndex = (currentIndex > 0) ? currentIndex - 1 : totalPhotos - 1;
+            updateCarousel();
+        });
+
+        // Botón siguiente
+        nextBtn.addEventListener('click', () => {
+            currentIndex = (currentIndex < totalPhotos - 1) ? currentIndex + 1 : 0;
+            updateCarousel();
+        });
+
+        // Cerrar vista expandida
+        closeBtn.addEventListener('click', () => {
+            expandedView.classList.remove('active');
+            stopAutoSlide();
+            clearTimeout(inactivityTimeout);
+        });
+
+        expandedView.addEventListener('click', (e) => {
+            if (e.target === expandedView) {
+                expandedView.classList.remove('active');
+                stopAutoSlide();
+                clearTimeout(inactivityTimeout);
+            }
+        });
+
+        // Navegación en vista expandida
+        leftArrow.addEventListener('click', () => {
+            navigateImage(-1);
+            handleManualNavigation();
+        });
+
+        rightArrow.addEventListener('click', () => {
+            navigateImage(1);
+            handleManualNavigation();
+        });
+
+        document.addEventListener('keydown', (e) => {
+            if (expandedView.classList.contains('active')) {
+                if (e.key === 'ArrowLeft') {
+                    navigateImage(-1);
+                    handleManualNavigation();
+                } else if (e.key === 'ArrowRight') {
+                    navigateImage(1);
+                    handleManualNavigation();
+                } else if (e.key === 'Escape') {
+                    expandedView.classList.remove('active');
+                    stopAutoSlide();
+                    clearTimeout(inactivityTimeout);
+                }
+            } else {
+                if (e.key === 'ArrowLeft') {
+                    prevBtn.click();
+                } else if (e.key === 'ArrowRight') {
+                    nextBtn.click();
+                }
+            }
+        });
+
+        function navigateImage(direction) {
+            currentIndex = (currentIndex + direction + totalPhotos) % totalPhotos;
+            expandedImage.style.opacity = '0';
+            setTimeout(() => {
+                expandedImage.src = photos[currentIndex].querySelector('img').src;
+                expandedImage.style.opacity = '1';
+            }, 300);
+            updateCarousel();
+        }
+
+        function startAutoSlide() {
+            stopAutoSlide();
+            autoSlideInterval = setInterval(() => {
+                currentIndex = (currentIndex < totalPhotos - 1) ? currentIndex + 1 : 0;
+                updateCarousel();
+            }, 3000);
+        }
+
+        function stopAutoSlide() {
+            if (autoSlideInterval) {
+                clearInterval(autoSlideInterval);
+            }
+        }
+
+        function handleManualNavigation() {
+            stopAutoSlide();
+            clearTimeout(inactivityTimeout);
+            inactivityTimeout = setTimeout(() => {
+                if (expandedView.classList.contains('active')) {
+                    startAutoSlide();
+                }
+            }, 15000);
+        }
+
+        function createPageTurnEffect(container) {
+            const rect = container.getBoundingClientRect();
+            const pageCurl = document.createElement('div');
+            pageCurl.style.cssText = `
+                position: absolute;
+                width: ${rect.width}px;
+                height: ${rect.height}px;
+                top: ${rect.top}px;
+                left: ${rect.left}px;
+                background: linear-gradient(45deg, rgba(255,255,255,0.4), transparent);
+                transform-origin: left center;
+                z-index: 1001;
+                pointer-events: none;
+            `;
+            document.body.appendChild(pageCurl);
+
+            setTimeout(() => {
+                pageCurl.style.transform = 'rotateY(-90deg)';
+                pageCurl.style.opacity = '0';
+                setTimeout(() => pageCurl.remove(), 600);
+            }, 10);
+
+            for (let i = 0; i < 10; i++) {
+                const particle = document.createElement('div');
+                particle.style.cssText = `
+                    position: absolute;
+                    width: 3px;
+                    height: 3px;
+                    background: #ff4d4d;
+                    border-radius: 50%;
+                    left: ${rect.left + rect.width}px;
+                    top: ${rect.top + rect.height/2}px;
+                    pointer-events: none;
+                    z-index: 1001;
+                `;
+                document.body.appendChild(particle);
+
+                const angle = Math.random() * Math.PI;
+                const distance = Math.random() * 60;
+                setTimeout(() => {
+                    particle.style.transform = `translate(${Math.cos(angle) * distance}px, ${Math.sin(angle) * distance}px) rotate(720deg)`;
+                    particle.style.opacity = '0';
+                    setTimeout(() => particle.remove(), 800);
+                }, 10);
+            }
+        }
+
+        // Iniciar el carrusel
+        updateCarousel();
+        startAutoSlide();
+    </script>
+</body>
+</html>
